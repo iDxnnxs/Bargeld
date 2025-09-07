@@ -979,7 +979,7 @@ select.form-control {
     margin-top: var(--space-32);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1200px) {
     .charts-container {
         grid-template-columns: repeat(2, 1fr);
     }
