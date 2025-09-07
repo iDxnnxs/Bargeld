@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digitaler Euro und die Bargeldpflicht in Geschäften</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="survey-styles.css">
+    <link rel="stylesheet" href="chart-width-fix.css">
+    
+
+    <!-- Firebase und Chart.js CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Background Money Animations -->
+    <div class="money-background">
+        <div class="floating-money">
+            <div class="money-item banknote">💶</div>
+            <div class="money-item coin">🪙</div>
+            <div class="money-item currency">€</div>
+            <div class="money-item banknote">💵</div>
+            <div class="money-item coin">🪙</div>
+            <div class="money-item currency">$</div>
+            <div class="money-item banknote">💷</div>
+            <div class="money-item currency">£</div>
+            <div class="money-item coin">🪙</div>
+            <div class="money-item currency">¥</div>
+            <div class="money-item banknote">💶</div>
+            <div class="money-item currency">₿</div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+        <div class="progress-fill"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">💰</span>
+                Digital Euro
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#hero" class="nav-link">Start</a></li>
+                <li><a href="#source" class="nav-link">Quelle</a></li>
+                <li><a href="#introduction" class="nav-link">Einführung</a></li>
+                <li><a href="#history" class="nav-link">Geschichte</a></li>
+                <li><a href="#current" class="nav-link">Aktuell</a></li>
+                <li><a href="#legal" class="nav-link">Rechtlich</a></li>
+                <li><a href="#economic" class="nav-link">Wirtschaft</a></li>
+                <li><a href="#risks" class="nav-link">Risiken</a></li>
+                <li><a href="#conclusion" class="nav-link">Fazit</a></li>
+                <li><a href="#discussion" class="nav-link">Diskussion</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero-section">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="title-icon">🏛️</span>
+                    <span class="title-main">Digitaler Euro</span>
+                    <span class="title-sub">und die Bargeldpflicht in Geschäften</span>
+                </h1>
+                <p class="hero-subtitle">Wie die Zukunft des Bezahlens unsere Gesellschaft verändert</p>
+                
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <div class="stat-icon">🌍</div>
+                        <div class="stat-number" data-target="18">0</div>
+                        <div class="stat-label">EU-Länder mit Bargeldobergrenzen</div>
+                        <div class="stat-particles"></div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">💳</div>
+                        <div class="stat-number" data-target="3">0</div>
+                        <div class="stat-label">Max. Gebühren bei digitalen Zahlungen (%)</div>
+                        <div class="stat-particles"></div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-number" data-target="2027">2025</div>
+                        <div class="stat-label">Geplante Einführung des digitalen Euro</div>
+                        <div class="stat-particles"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Source Section -->
+    <section id="source" class="section">
+        <div class="container">
+            <h2><span class="section-icon">🎥</span>Quellenangabe</h2>
+            <div class="source-card">
+                <div class="source-decoration">
+                    <div class="floating-icon">📺</div>
+                </div>
+                <h3><strong>"Krieg gegen das Bargeld: Bargeldabschaffung kommt"</strong></h3>
+                <p><strong>Autoren:</strong> Prof. Dr. Christian Rieck & Hansjörg Stützle</p>
+                <p><strong>Veröffentlicht:</strong> 26. Juli 2025</p>
+                <p><strong>Plattform:</strong> YouTube</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Introduction Section -->
+    <section id="introduction" class="section">
+        <div class="container">
+            <h2><span class="section-icon">💡</span>Was ist der digitale Euro?</h2>
+            <div class="intro-grid">
+                <div class="morphing-card">
+                    <div class="card-icon">🏦</div>
+                    <h3>Digitaler Euro</h3>
+                    <p>Eine von der Europäischen Zentralbank ausgegebene digitale Form des Euro</p>
+                    <p>Direktes Zentralbankgeld für Bürger, nicht nur für Geschäftsbanken</p>
+                    <p>Elektronische Zahlungen ohne physisches Bargeld</p>
+                    <div class="card-glow"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- History Section -->
+    <section id="history" class="section">
+        <div class="container">
+            <h2><span class="section-icon">🕰️</span>Die Evolution des Geldes</h2>
+            <div class="timeline-container">
+                <div class="timeline-header">
+                    <p>Klicken Sie auf die verschiedenen Epochen, um mehr über die Evolution des Geldes zu erfahren</p>
+                </div>
+                
+                <div class="interactive-timeline">
+                    <div class="timeline-track">
+                        <div class="timeline-progress"></div>
+                    </div>
+                    
+                    <div class="timeline-point" style="left: 5%;" data-icon="🔄" data-title="Tauschhandel" data-year="3000 v. Chr." data-description="Menschen tauschten Waren direkt - Getreide gegen Vieh, Werkzeuge gegen Nahrung" data-color="#8B5A3C">
+                        <div class="point-marker">🔄</div>
+                        <div class="point-year">3000 v. Chr.</div>
+                    </div>
+                    
+                    <div class="timeline-point" style="left: 15%;" data-icon="🐚" data-title="Warengeld" data-year="3000 v. Chr." data-description="Muscheln, Vieh und andere wertvolle Güter als erste Zahlungsmittel" data-color="#D97706">
+                        <div class="point-marker">🐚</div>
+                        <div class="point-year">3000 v. Chr.</div>
+                    </div>
+                    
+                    <div class="timeline-point" style="left: 25%;" data-icon="🪙" data-title="Metallmünzen" data-year="700 v. Chr." data-description="Erste geprägte Münzen aus Gold und Silber im antiken Griechenland" data-color="#F59E0B">
+                        <div class="point-marker">🪙</div>
+                        <div class="point-year">700 v. Chr.</div>
+                    </div>
+                    
+                    <div class="timeline-point" style="left: 35%;" data-icon="📜" data-title="Papiergeld" data-year="1000 n. Chr." data-description="China führt die ersten Banknoten aus Papier ein" data-color="#10B981">
+                        <div class="point-marker">📜</div>
+                        <div class="point-year">1000 n. Chr.</div>
+                    </div>
+                    
+                    <div class="timeline-point" style="left: 45%;" data-icon="💷" data-title="Banknoten" data-year="1600" data-description="Europäische Banken geben die ersten modernen Geldscheine aus" data-color="#3B82F6">
+                        <div class="point-marker">💷</div>
+                        <div class="point-year">1600</div>
+                    </div>
+                    
+                    <div class="timeline-point" style="left: 55%;" data-icon="💳" data-title="Kreditkarten" data-year="1950" data-description="Erste Kreditkarten revolutionieren den bargeldlosen Zahlungsverkehr" data-color="#8B5CF6">
+                        <div class="point-marker">💳</div>
+                        <div class="point-year">1950</div>
+                    </div>
+                    
+                    <div class="timeline-point" style="left: 65%;" data-icon="🏧" data-title="Electronic Banking" data-year="1970" data-description="Erste elektronische Überweisungen und Geldautomaten" data-color="#06B6D4">
+                        <div class="point-marker">🏧</div>
+                        <div class="point-year">1970</div>
+                    </div>
+                    
+                    <div class="timeline-point" style="left: 75%;" data-icon="💻" data-title="Online Banking" data-year="1990" data-description="Internet ermöglicht Bankgeschäfte von zu Hause" data-color="#EC4899">
+                        <div class="point-marker">💻</div>
+                        <div class="point-year">1990</div>
+                    </div>
+                    
+                    <div class="timeline-point" style="left: 85%;" data-icon="📱" data-title="Mobile Payments" data-year="2000" data-description="Smartphone-basierte Zahlungssysteme wie Apple Pay" data-color="#F97316">
+                        <div class="point-marker">📱</div>
+                        <div class="point-year">2000</div>
+                    </div>
+                    
+                    <div class="timeline-point" style="left: 95%;" data-icon="🏛️" data-title="Digitaler Euro" data-year="2025" data-description="Zentralbank-Digital-Währungen als staatliche Alternative" data-color="#1E40AF">
+                        <div class="point-marker">🏛️</div>
+                        <div class="point-year">2025</div>
+                    </div>
+                </div>
+                
+                <div class="timeline-details">
+                    <div class="details-content">
+                        <div class="details-icon">🏛️</div>
+                        <div class="details-text">
+                            <div class="details-year">2025</div>
+                            <h3>Digitaler Euro</h3>
+                            <p class="details-description">Zentralbank-Digital-Währungen als staatliche Alternative</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Current Section -->
+    <section id="current" class="section">
+        <div class="container">
+            <h2><span class="section-icon">📊</span>Aktuelle Entwicklungen in Europa</h2>
+            <div class="countries-grid">
+                <div class="pulsing-card" data-country="Italien">
+                    <div class="country-flag">🇮🇹</div>
+                    <h3>Italien</h3>
+                    <div class="limit-amount">3.000 €</div>
+                    <p>Bargeldobergrenze pro Transaktion</p>
+                    <div class="limit-indicator"></div>
+                </div>
+                <div class="pulsing-card" data-country="Spanien">
+                    <div class="country-flag">🇪🇸</div>
+                    <h3>Spanien</h3>
+                    <div class="limit-amount">2.500 €</div>
+                    <p>Bargeldobergrenze pro Transaktion</p>
+                    <div class="limit-indicator"></div>
+                </div>
+                <div class="pulsing-card" data-country="Frankreich">
+                    <div class="country-flag">🇫🇷</div>
+                    <h3>Frankreich</h3>
+                    <div class="limit-amount">1.000 €</div>
+                    <p>Bargeldobergrenze pro Transaktion</p>
+                    <div class="limit-indicator"></div>
+                </div>
+                <div class="pulsing-card" data-country="Griechenland">
+                    <div class="country-flag">🇬🇷</div>
+                    <h3>Griechenland</h3>
+                    <div class="limit-amount">500 €</div>
+                    <p>Bargeldobergrenze pro Transaktion</p>
+                    <div class="limit-indicator"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Legal Section -->
+    <section id="legal" class="section">
+        <div class="container">
+            <h2><span class="section-icon">⚖️</span>Rechtliche Bezüge</h2>
+            <div class="legal-comparison">
+                <div class="morphing-comparison">
+                    <div class="comparison-animation cash-animation">💵</div>
+                    <h3>Bargeld</h3>
+                    <div class="status-current">Gesetzliches Zahlungsmittel</div>
+                    <div class="acceptance-status">Keine einheitliche Annahmepflicht</div>
+                </div>
+                
+                <div class="morphing-vs">
+                    VS
+                    <div class="vs-lightning">⚡</div>
+                </div>
+                
+                <div class="morphing-comparison">
+                    <div class="comparison-animation digital-animation">💳</div>
+                    <h3>Digitaler Euro</h3>
+                    <div class="status-planned">Soll gesetzliches Zahlungsmittel werden</div>
+                    <div class="acceptance-planned">Geplante Annahmepflicht für Händler</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Economic Section -->
+    <section id="economic" class="section">
+        <div class="container">
+            <h2><span class="section-icon">💰</span>Wirtschaftliche Bezüge</h2>
+            <div class="enhanced-calculator">
+                <h3><span class="section-icon">🧮</span>Gebührenrechner</h3>
+                <div class="calculator-input">
+                    <label for="amount">Kaufbetrag (Euro):</label>
+                    <input type="number" id="amount" value="100" min="1" max="10000">
+                    <div class="input-animation"></div>
+                </div>
+                
+                <div class="fee-grid">
+                    <div class="animated-fee-card" data-fee="0">
+                        <div class="fee-icon">💵</div>
+                        <h4>Bargeld</h4>
+                        <div class="fee-amount">0,00 €</div>
+                        <div class="fee-bar">
+                            <div class="fee-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="animated-fee-card" data-fee="0.4">
+                        <div class="fee-icon">💳</div>
+                        <h4>EC-Karte</h4>
+                        <div class="fee-amount">0,40 €</div>
+                        <div class="fee-bar">
+                            <div class="fee-fill" style="width: 13%;"></div>
+                        </div>
+                    </div>
+                    <div class="animated-fee-card" data-fee="2.5">
+                        <div class="fee-icon">💳</div>
+                        <h4>Kreditkarte</h4>
+                        <div class="fee-amount">2,50 €</div>
+                        <div class="fee-bar">
+                            <div class="fee-fill" style="width: 83%;"></div>
+                        </div>
+                    </div>
+                    <div class="animated-fee-card" data-fee="1.2">
+                        <div class="fee-icon">📱</div>
+                        <h4>Digital Payment</h4>
+                        <div class="fee-amount">1,20 €</div>
+                        <div class="fee-bar">
+                            <div class="fee-fill" style="width: 40%;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="money-flow-animation">
+                    <div class="flow-particle">💰</div>
+                    <div class="flow-particle">💸</div>
+                    <div class="flow-particle">💳</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Risks Section -->
+    <section id="risks" class="section">
+        <div class="container">
+            <h2><span class="section-icon">⚠️</span>Risiken einer bargeldlosen Gesellschaft</h2>
+            <div class="risks-grid">
+                <div class="animated-risk-card">
+                    <div class="risk-header">
+                        <div class="risk-icon danger-pulse">⚡</div>
+                        <h3>Systemische Verwundbarkeit</h3>
+                        <button class="toggle-btn">+</button>
+                    </div>
+                    <div class="risk-details">
+                        <p>Bei Stromausfällen oder Cyberangriffen funktionieren digitale Zahlungen nicht</p>
+                        <div class="risk-visual">🌩️ Kein Strom = Keine Zahlung</div>
+                    </div>
+                </div>
+                
+                <div class="animated-risk-card">
+                    <div class="risk-header">
+                        <div class="risk-icon eye-blink">👁️</div>
+                        <h3>Finanzielle Überwachung</h3>
+                        <button class="toggle-btn">+</button>
+                    </div>
+                    <div class="risk-details">
+                        <p>Jede digitale Transaktion ist nachverfolgbar und überwachbar</p>
+                        <div class="risk-visual">👀 Totale Transparenz aller Ausgaben</div>
+                    </div>
+                </div>
+                
+                <div class="animated-risk-card">
+                    <div class="risk-header">
+                        <div class="risk-icon chart-fall">📉</div>
+                        <h3>Negative Zinsen</h3>
+                        <button class="toggle-btn">+</button>
+                    </div>
+                    <div class="risk-details">
+                        <p>Ohne Bargeld können Negativzinsen von 5-8% durchgesetzt werden</p>
+                        <div class="risk-visual">📊 Zwangs-Enteignung der Sparer</div>
+                    </div>
+                </div>
+                
+                <div class="animated-risk-card">
+                    <div class="risk-header">
+                        <div class="risk-icon barrier-shake">🚫</div>
+                        <h3>Soziale Ausgrenzung</h3>
+                        <button class="toggle-btn">+</button>
+                    </div>
+                    <div class="risk-details">
+                        <p>Menschen ohne Zugang zu digitalen Zahlungen werden ausgeschlossen</p>
+                        <div class="risk-visual">👥 Digitale Kluft verstärkt Ungleichheit</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Conclusion Section -->
+    <section id="conclusion" class="section">
+        <div class="container">
+            <h2><span class="section-icon">🎯</span>Fazit</h2>
+            <div class="key-points">
+                <div class="glowing-point">
+                    <div class="point-icon">🔒</div>
+                    <div>
+                        <h4>Bargeld garantiert finanzielle Privatsphäre und Autonomie</h4>
+                    </div>
+                    <div class="point-glow"></div>
+                </div>
+                <div class="glowing-point">
+                    <div class="point-icon">🌍</div>
+                    <div>
+                        <h4>18 EU-Länder haben bereits Bargeldobergrenzen eingeführt</h4>
+                    </div>
+                    <div class="point-glow"></div>
+                </div>
+                <div class="glowing-point">
+                    <div class="point-icon">⚖️</div>
+                    <div>
+                        <h4>Digitaler Euro benötigt rechtliche Gleichstellung mit Bargeld</h4>
+                    </div>
+                    <div class="point-glow"></div>
+                </div>
+                <div class="glowing-point">
+                    <div class="point-icon">💸</div>
+                    <div>
+                        <h4>Finanzbranche profitiert von digitalen Zahlungsgebühren</h4>
+                    </div>
+                    <div class="point-glow"></div>
+                </div>
+                <div class="glowing-point">
+                    <div class="point-icon">🛡️</div>
+                    <div>
+                        <h4>Bargeld schützt vor Systemausfällen und digitaler Überwachung</h4>
+                    </div>
+                    <div class="point-glow"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ERWEITERTE DISKUSSION / UMFRAGE SEKTION -->
+    <section id="discussion" class="section">
+        <div class="container">
+            <h2><span class="section-icon">💭</span>Diskussion & Umfrage</h2>
+            
+            <!-- Original Diskussionsfrage bleibt -->
+            <div class="animated-discussion">
+                <div class="discussion-decoration">
+                    <div class="floating-vote">🗳️</div>
+                    <div class="floating-vote">💭</div>
+                </div>
+                <h3>Sollten Geschäfte auch zukünftig gesetzlich verpflichtet sein, Bargeld als Zahlungsmittel anzunehmen?</h3>
+                
+                <div class="poll-options">
+                    <div class="animated-poll-btn" data-option="ja">
+                        <div class="poll-icon">✅</div>
+                        <div class="poll-text">Ja, Bargeldpflicht beibehalten</div>
+                        <div class="poll-percentage">0%</div>
+                        <div class="poll-animation"></div>
+                    </div>
+                    <div class="animated-poll-btn" data-option="nein">
+                        <div class="poll-icon">❌</div>
+                        <div class="poll-text">Nein, freie Wahl für Geschäfte</div>
+                        <div class="poll-percentage">0%</div>
+                        <div class="poll-animation"></div>
+                    </div>
+                    <div class="animated-poll-btn" data-option="teilweise">
+                        <div class="poll-icon">⚖️</div>
+                        <div class="poll-text">Teilweise, nur in bestimmten Bereichen</div>
+                        <div class="poll-percentage">0%</div>
+                        <div class="poll-animation"></div>
+                    </div>
+                </div>
+                
+                <div class="poll-results">
+                    <p>Insgesamt <strong id="total-votes">0</strong> Stimmen abgegeben</p>
+                </div>
+            </div>
+
+            <!-- NEUE ERWEITERTE UMFRAGE -->
+            <div class="survey-section">
+                <h3><span class="section-icon">📊</span>Detaillierte Umfrage zur Zukunft des Bezahlens</h3>
+                <p>Hilf uns dabei, die Meinung unserer Klasse zu verstehen und vergleiche deine Ansichten mit bundesweiten Umfragen!</p>
+                
+                <form id="detailedSurveyForm" class="survey-form">
+                    <div class="survey-question">
+                        <h4>1. Welche Zahlungsweise bevorzugst du persönlich?</h4>
+                        <div class="survey-options">
+                            <label class="survey-option">
+                                <input type="radio" name="payment_preference" value="bargeld" required>
+                                <span class="option-icon">💵</span>
+                                <span class="option-text">Bargeld</span>
+                            </label>
+                            <label class="survey-option">
+                                <input type="radio" name="payment_preference" value="bargeldlos">
+                                <span class="option-icon">💳</span>
+                                <span class="option-text">Bargeldlos (Karte/Digital)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="survey-question">
+                        <h4>2. Wie sicher fühlst du dich beim digitalen Bezahlen?</h4>
+                        <div class="survey-options">
+                            <label class="survey-option">
+                                <input type="radio" name="digital_security" value="sehr_sicher" required>
+                                <span class="option-icon">🔒</span>
+                                <span class="option-text">Sehr sicher</span>
+                            </label>
+                            <label class="survey-option">
+                                <input type="radio" name="digital_security" value="sicher">
+                                <span class="option-icon">🔓</span>
+                                <span class="option-text">Sicher</span>
+                            </label>
+                            <label class="survey-option">
+                                <input type="radio" name="digital_security" value="unsicher">
+                                <span class="option-icon">⚠️</span>
+                                <span class="option-text">Unsicher</span>
+                            </label>
+                            <label class="survey-option">
+                                <input type="radio" name="digital_security" value="sehr_unsicher">
+                                <span class="option-icon">🚨</span>
+                                <span class="option-text">Sehr unsicher</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="survey-question">
+                        <h4>3. Würdest du den digitalen Euro nutzen?</h4>
+                        <div class="survey-options">
+                            <label class="survey-option">
+                                <input type="radio" name="digital_euro_usage" value="ja" required>
+                                <span class="option-icon">✅</span>
+                                <span class="option-text">Ja, definitiv</span>
+                            </label>
+                            <label class="survey-option">
+                                <input type="radio" name="digital_euro_usage" value="nein">
+                                <span class="option-icon">❌</span>
+                                <span class="option-text">Nein, nicht interessiert</span>
+                            </label>
+                            <label class="survey-option">
+                                <input type="radio" name="digital_euro_usage" value="vielleicht">
+                                <span class="option-icon">🤔</span>
+                                <span class="option-text">Vielleicht, kommt drauf an</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="survey-question">
+                        <h4>4. Was ist dir beim Bezahlen am wichtigsten?</h4>
+                        <div class="survey-options">
+                            <label class="survey-option">
+                                <input type="radio" name="payment_priority" value="schnelligkeit" required>
+                                <span class="option-icon">⚡</span>
+                                <span class="option-text">Schnelligkeit</span>
+                            </label>
+                            <label class="survey-option">
+                                <input type="radio" name="payment_priority" value="sicherheit">
+                                <span class="option-icon">🔒</span>
+                                <span class="option-text">Sicherheit</span>
+                            </label>
+                            <label class="survey-option">
+                                <input type="radio" name="payment_priority" value="privatsphaere">
+                                <span class="option-icon">🕵️</span>
+                                <span class="option-text">Privatsphäre</span>
+                            </label>
+                            <label class="survey-option">
+                                <input type="radio" name="payment_priority" value="kosten">
+                                <span class="option-icon">💰</span>
+                                <span class="option-text">Niedrige Kosten</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="survey-question">
+                        <h4>5. Sollte die Annahmepflicht für Bargeld in Geschäften bleiben?</h4>
+                        <div class="survey-options">
+                            <label class="survey-option">
+                                <input type="radio" name="cash_obligation" value="ja" required>
+                                <span class="option-icon">✅</span>
+                                <span class="option-text">Ja, immer</span>
+                            </label>
+                            <label class="survey-option">
+                                <input type="radio" name="cash_obligation" value="nein">
+                                <span class="option-icon">❌</span>
+                                <span class="option-text">Nein, freie Wahl</span>
+                            </label>
+                            <label class="survey-option">
+                                <input type="radio" name="cash_obligation" value="teilweise">
+                                <span class="option-icon">⚖️</span>
+                                <span class="option-text">Nur in bestimmten Bereichen</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="survey-submit-btn">
+                        <span class="btn-icon">🚀</span>
+                        Umfrage abschicken
+                    </button>
+                </form>
+
+                <!-- Erfolgsmeldung nach Absenden -->
+                <div id="surveySuccess" class="survey-success" style="display: none;">
+                    <h3>🎉 Vielen Dank für deine Teilnahme!</h3>
+                    <p>Deine Antworten wurden gespeichert. Hier siehst du die aktuellen Ergebnisse im Vergleich:</p>
+                </div>
+
+                <!-- Diagramm-Container -->
+                <div class="charts-container">
+                    <div class="chart-section">
+                        <h4>Zahlungspräferenz: Klasse vs. Deutschland</h4>
+                        <canvas id="paymentChart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <div class="chart-section">
+                        <h4>Digitale Sicherheit: Klasse vs. Deutschland</h4>
+                        <canvas id="securityChart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <div class="chart-section">
+                        <h4>Digitaler Euro Nutzung: Klasse vs. Deutschland</h4>
+                        <canvas id="euroChart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <div class="chart-section">
+                        <h4>Zahlungs-Prioritäten: Klasse vs. Deutschland</h4>
+                        <canvas id="priorityChart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <div class="chart-section">
+                        <h4>Bargeld-Annahmepflicht: Klasse vs. Deutschland</h4>
+                        <canvas id="obligationChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Statistiken -->
+                <div class="survey-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalResponses">0</div>
+                        <div class="stat-label">Teilnehmer</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="lastUpdate">-</div>
+                        <div class="stat-label">Letzte Aktualisierung</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="app.js"></script>
+</body>
+</html>
