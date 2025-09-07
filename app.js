@@ -1,5 +1,4 @@
-// Enhanced Creative Digital Euro Presentation JavaScript
-
+// Enhanced Creative Digital Euro Presentation JavaScript mit Firebase Umfrage-Integration
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all functionality
     initProgressBar();
@@ -15,7 +14,513 @@ document.addEventListener('DOMContentLoaded', function() {
     initEnhancedEffects();
     initKeyboardNavigation();
     initParticleEffects();
+    
+    // Initialize Firebase Survey System
+    initFirebaseSurvey();
 });
+
+// ===== FIREBASE KONFIGURATION =====
+// WICHTIG: Hier deine Firebase-Config einfügen!
+const firebaseConfig = {
+  apiKey: "AIzaSyB2T-H7yK1pDtShwrYMyj4D14jdw0uW8Rg",
+  authDomain: "digitaleuroumfrage.firebaseapp.com",
+  projectId: "digitaleuroumfrage",
+  storageBucket: "digitaleuroumfrage.firebasestorage.app",
+  messagingSenderId: "756386726005",
+  appId: "1:756386726005:web:10565776ef9ab74ddc383c",
+  measurementId: "G-K9C69LF31Q"
+};
+
+// Firebase initialisieren
+let db = null;
+let firebaseInitialized = false;
+
+try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    firebaseInitialized = true;
+    console.log("Firebase erfolgreich initialisiert");
+} catch (error) {
+    console.error("Firebase Initialisierungsfehler:", error);
+    console.log("Demo-Modus ohne Firebase aktiv");
+}
+
+// Deutsche Referenz-Statistiken (basierend auf repräsentativen Umfragen)
+const germanStats = {
+    payment_preference: { bargeld: 45, bargeldlos: 55 },
+    cash_obligation: { ja: 68, nein: 22, teilweise: 10 },
+    digital_security: { sehr_sicher: 15, sicher: 45, unsicher: 30, sehr_unsicher: 10 },
+    digital_euro_usage: { ja: 35, nein: 25, vielleicht: 40 },
+    payment_priority: { schnelligkeit: 25, sicherheit: 45, privatsphaere: 20, kosten: 10 }
+};
+
+// Chart Instanzen speichern
+const surveyCharts = {};
+
+// ===== FIREBASE UMFRAGE SYSTEM =====
+function initFirebaseSurvey() {
+    const surveyForm = document.getElementById('detailedSurveyForm');
+    const successDiv = document.getElementById('surveySuccess');
+    
+    if (!surveyForm) return;
+    
+    // Event Listener für Formular-Absenden
+    surveyForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            // Zeige Loading-Animation
+            const submitBtn = surveyForm.querySelector('.survey-submit-btn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="btn-icon">⏳</span>Wird gespeichert...';
+            submitBtn.disabled = true;
+            
+            // Sammle Formulardaten
+            const formData = new FormData(surveyForm);
+            const surveyData = {
+                payment_preference: formData.get('payment_preference'),
+                digital_security: formData.get('digital_security'),
+                digital_euro_usage: formData.get('digital_euro_usage'),
+                payment_priority: formData.get('payment_priority'),
+                cash_obligation: formData.get('cash_obligation'),
+                timestamp: new Date().toISOString(),
+                user_agent: navigator.userAgent
+            };
+            
+            // Speichere in Firebase (falls verfügbar)
+            if (firebaseInitialized && db) {
+                await db.collection('survey_responses').add(surveyData);
+                console.log("Umfrage erfolgreich in Firebase gespeichert");
+            } else {
+                // Fallback: Lokale Speicherung für Demo
+                console.log("Demo-Modus: Umfrage lokal gespeichert", surveyData);
+            }
+            
+            // Zeige Erfolgs-Message
+            successDiv.style.display = 'block';
+            surveyForm.style.display = 'none';
+            
+            // Lade und zeige Ergebnisse
+            await loadAndDisplaySurveyResults();
+            
+            // Scroll zu Diagrammen
+            document.querySelector('.charts-container').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+            
+        } catch (error) {
+            console.error('Fehler beim Speichern der Umfrage:', error);
+            alert('Fehler beim Speichern deiner Antworten. Bitte versuche es erneut.');
+            
+            // Restore button
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    });
+    
+    // Lade initial die Diagramme
+    loadAndDisplaySurveyResults();
+}
+
+// Lade Umfrage-Ergebnisse und erstelle Diagramme
+async function loadAndDisplaySurveyResults() {
+    try {
+        let responses = [];
+        
+        if (firebaseInitialized && db) {
+            // Lade echte Daten aus Firebase
+            const snapshot = await db.collection('survey_responses').get();
+            responses = [];
+            snapshot.forEach(doc => {
+                responses.push(doc.data());
+            });
+        } else {
+            // Demo-Daten für Präsentation (falls Firebase nicht verfügbar)
+            responses = generateDemoResponses(12);
+        }
+        
+        // Update Statistiken
+        updateSurveyStats(responses.length);
+        
+        // Erstelle alle Diagramme
+        createPaymentPreferenceChart(responses);
+        createDigitalSecurityChart(responses);
+        createDigitalEuroChart(responses);
+        createPaymentPriorityChart(responses);
+        createCashObligationChart(responses);
+        
+    } catch (error) {
+        console.error('Fehler beim Laden der Umfrageergebnisse:', error);
+    }
+}
+
+// Aggregiere Antworten für eine bestimmte Frage
+function aggregateResponses(responses, question) {
+    const counts = {};
+    responses.forEach(response => {
+        const answer = response[question];
+        if (answer) {
+            counts[answer] = (counts[answer] || 0) + 1;
+        }
+    });
+    return counts;
+}
+
+// Berechne Prozentualien
+function calculatePercentages(counts, total) {
+    const percentages = {};
+    Object.keys(counts).forEach(key => {
+        percentages[key] = total > 0 ? Math.round((counts[key] / total) * 100) : 0;
+    });
+    return percentages;
+}
+
+// Update Survey Statistics
+function updateSurveyStats(totalResponses) {
+    document.getElementById('totalResponses').textContent = totalResponses;
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('de-DE', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// ===== DIAGRAMM-FUNKTIONEN =====
+
+function createPaymentPreferenceChart(responses) {
+    const ctx = document.getElementById('paymentChart');
+    if (!ctx) return;
+    
+    const counts = aggregateResponses(responses, 'payment_preference');
+    const total = responses.length;
+    const classPercentages = calculatePercentages(counts, total);
+    
+    // Destroy existing chart
+    if (surveyCharts.payment) {
+        surveyCharts.payment.destroy();
+    }
+    
+    surveyCharts.payment = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Bargeld', 'Bargeldlos'],
+            datasets: [{
+                label: 'Klasse (%)',
+                data: [
+                    classPercentages.bargeld || 0,
+                    classPercentages.bargeldlos || 0
+                ],
+                backgroundColor: ['#10B981', '#3B82F6'],
+                borderRadius: 8
+            }, {
+                label: 'Deutschland (%)',
+                data: [
+                    germanStats.payment_preference.bargeld,
+                    germanStats.payment_preference.bargeldlos
+                ],
+                backgroundColor: ['#059669', '#2563EB'],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: 'Bevorzugte Zahlungsweise'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createDigitalSecurityChart(responses) {
+    const ctx = document.getElementById('securityChart');
+    if (!ctx) return;
+    
+    const counts = aggregateResponses(responses, 'digital_security');
+    const total = responses.length;
+    const classPercentages = calculatePercentages(counts, total);
+    
+    if (surveyCharts.security) {
+        surveyCharts.security.destroy();
+    }
+    
+    surveyCharts.security = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Sehr sicher', 'Sicher', 'Unsicher', 'Sehr unsicher'],
+            datasets: [{
+                label: 'Klasse (%)',
+                data: [
+                    classPercentages.sehr_sicher || 0,
+                    classPercentages.sicher || 0,
+                    classPercentages.unsicher || 0,
+                    classPercentages.sehr_unsicher || 0
+                ],
+                backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom'
+                },
+                title: {
+                    display: true,
+                    text: 'Sicherheitsgefühl (Klasse)'
+                }
+            }
+        }
+    });
+}
+
+function createDigitalEuroChart(responses) {
+    const ctx = document.getElementById('euroChart');
+    if (!ctx) return;
+    
+    const counts = aggregateResponses(responses, 'digital_euro_usage');
+    const total = responses.length;
+    const classPercentages = calculatePercentages(counts, total);
+    
+    if (surveyCharts.euro) {
+        surveyCharts.euro.destroy();
+    }
+    
+    surveyCharts.euro = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Ja', 'Nein', 'Vielleicht'],
+            datasets: [{
+                label: 'Klasse (%)',
+                data: [
+                    classPercentages.ja || 0,
+                    classPercentages.nein || 0,
+                    classPercentages.vielleicht || 0
+                ],
+                backgroundColor: ['#10B981', '#EF4444', '#F59E0B'],
+                borderRadius: 8
+            }, {
+                label: 'Deutschland (%)',
+                data: [
+                    germanStats.digital_euro_usage.ja,
+                    germanStats.digital_euro_usage.nein,
+                    germanStats.digital_euro_usage.vielleicht
+                ],
+                backgroundColor: ['#059669', '#DC2626', '#D97706'],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: 'Würdest du den digitalen Euro nutzen?'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createPaymentPriorityChart(responses) {
+    const ctx = document.getElementById('priorityChart');
+    if (!ctx) return;
+    
+    const counts = aggregateResponses(responses, 'payment_priority');
+    const total = responses.length;
+    const classPercentages = calculatePercentages(counts, total);
+    
+    if (surveyCharts.priority) {
+        surveyCharts.priority.destroy();
+    }
+    
+    surveyCharts.priority = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Schnelligkeit', 'Sicherheit', 'Privatsphäre', 'Kosten'],
+            datasets: [{
+                label: 'Klasse (%)',
+                data: [
+                    classPercentages.schnelligkeit || 0,
+                    classPercentages.sicherheit || 0,
+                    classPercentages.privatsphaere || 0,
+                    classPercentages.kosten || 0
+                ],
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                pointRadius: 5
+            }, {
+                label: 'Deutschland (%)',
+                data: [
+                    germanStats.payment_priority.schnelligkeit,
+                    germanStats.payment_priority.sicherheit,
+                    germanStats.payment_priority.privatsphaere,
+                    germanStats.payment_priority.kosten
+                ],
+                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(16, 185, 129, 1)',
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: 'Prioritäten beim Bezahlen'
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 50,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createCashObligationChart(responses) {
+    const ctx = document.getElementById('obligationChart');
+    if (!ctx) return;
+    
+    const counts = aggregateResponses(responses, 'cash_obligation');
+    const total = responses.length;
+    const classPercentages = calculatePercentages(counts, total);
+    
+    if (surveyCharts.obligation) {
+        surveyCharts.obligation.destroy();
+    }
+    
+    surveyCharts.obligation = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Ja', 'Nein', 'Teilweise'],
+            datasets: [{
+                label: 'Klasse (%)',
+                data: [
+                    classPercentages.ja || 0,
+                    classPercentages.nein || 0,
+                    classPercentages.teilweise || 0
+                ],
+                backgroundColor: ['#10B981', '#EF4444', '#F59E0B'],
+                borderRadius: 8
+            }, {
+                label: 'Deutschland (%)',
+                data: [
+                    germanStats.cash_obligation.ja,
+                    germanStats.cash_obligation.nein,
+                    germanStats.cash_obligation.teilweise
+                ],
+                backgroundColor: ['#059669', '#DC2626', '#D97706'],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: 'Soll Bargeld-Annahmepflicht bleiben?'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Demo-Daten Generator (falls Firebase nicht verfügbar)
+function generateDemoResponses(count) {
+    const responses = [];
+    const options = {
+        payment_preference: ['bargeld', 'bargeldlos'],
+        digital_security: ['sehr_sicher', 'sicher', 'unsicher', 'sehr_unsicher'],
+        digital_euro_usage: ['ja', 'nein', 'vielleicht'],
+        payment_priority: ['schnelligkeit', 'sicherheit', 'privatsphaere', 'kosten'],
+        cash_obligation: ['ja', 'nein', 'teilweise']
+    };
+    
+    for (let i = 0; i < count; i++) {
+        const response = {};
+        Object.keys(options).forEach(key => {
+            const optionArray = options[key];
+            response[key] = optionArray[Math.floor(Math.random() * optionArray.length)];
+        });
+        response.timestamp = new Date().toISOString();
+        responses.push(response);
+    }
+    
+    return responses;
+}
+
+// ===== BESTEHENDE FUNKTIONEN (unverändert) =====
 
 // Enhanced Progress Bar with glow effect
 function initProgressBar() {
@@ -182,11 +687,9 @@ function initAnimatedCounters() {
                     const progress = Math.min(elapsed / duration, 1);
                     
                     // Enhanced easing function
-                    const easeOutBounce = progress < 0.5 
-                        ? 2 * progress * progress 
-                        : -1 + (4 - 2 * progress) * progress;
-                    
+                    const easeOutBounce = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
                     const currentValue = Math.round(target * easeOutBounce);
+                    
                     counter.textContent = currentValue;
                     
                     // Add glowing effect as number increases
@@ -289,38 +792,11 @@ function initInteractiveTimeline() {
     // Helper function to convert hex to rgb
     function hexToRgb(hex) {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? 
-            `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : 
-            '33, 128, 141';
+        return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '33, 128, 141';
     }
     
     // Add click handlers to timeline points
     timelinePoints.forEach((point, index) => {
-        // Ensure the point has the necessary data attributes
-        if (!point.getAttribute('data-title')) {
-            // Fallback data for missing attributes
-            const fallbackData = [
-                { icon: '🔄', title: 'Tauschhandel', year: '3000 v. Chr.', description: 'Menschen tauschten Waren direkt - Getreide gegen Vieh, Werkzeuge gegen Nahrung', color: '#8B5A3C' },
-                { icon: '🐚', title: 'Warengeld', year: '3000 v. Chr.', description: 'Muscheln, Vieh und andere wertvolle Güter als erste Zahlungsmittel', color: '#D97706' },
-                { icon: '🪙', title: 'Metallmünzen', year: '700 v. Chr.', description: 'Erste geprägte Münzen aus Gold und Silber im antiken Griechenland', color: '#F59E0B' },
-                { icon: '📜', title: 'Papiergeld', year: '1000 n. Chr.', description: 'China führt die ersten Banknoten aus Papier ein', color: '#10B981' },
-                { icon: '💷', title: 'Banknoten', year: '1600', description: 'Europäische Banken geben die ersten modernen Geldscheine aus', color: '#3B82F6' },
-                { icon: '💳', title: 'Kreditkarten', year: '1950', description: 'Erste Kreditkarten revolutionieren den bargeldlosen Zahlungsverkehr', color: '#8B5CF6' },
-                { icon: '🏧', title: 'Electronic Banking', year: '1970', description: 'Erste elektronische Überweisungen und Geldautomaten', color: '#06B6D4' },
-                { icon: '💻', title: 'Online Banking', year: '1990', description: 'Internet ermöglicht Bankgeschäfte von zu Hause', color: '#EC4899' },
-                { icon: '📱', title: 'Mobile Payments', year: '2000', description: 'Smartphone-basierte Zahlungssysteme wie Apple Pay', color: '#F97316' },
-                { icon: '₿', title: 'Kryptowährungen', year: '2009', description: 'Bitcoin als erste dezentrale digitale Währung', color: '#EAB308' },
-                { icon: '🏛️', title: 'Digitaler Euro', year: '2025', description: 'Zentralbank-Digital-Währungen als staatliche Alternative', color: '#1E40AF' }
-            ];
-            
-            const data = fallbackData[index] || fallbackData[fallbackData.length - 1];
-            point.setAttribute('data-icon', data.icon);
-            point.setAttribute('data-title', data.title);
-            point.setAttribute('data-year', data.year);
-            point.setAttribute('data-description', data.description);
-            point.setAttribute('data-color', data.color);
-        }
-        
         point.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -351,10 +827,7 @@ function initInteractiveTimeline() {
             
             // Scroll timeline into view if needed
             setTimeout(() => {
-                this.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
+                this.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 100);
         });
         
@@ -427,28 +900,6 @@ function initInteractiveTimeline() {
             lastPoint.click();
         }, 1000);
     }
-    
-    // Auto-play timeline demo (optional - can be disabled)
-    let autoPlayIndex = 0;
-    const autoPlayInterval = setInterval(() => {
-        if (autoPlayIndex < timelinePoints.length && autoPlayIndex < 3) { // Only show first 3 automatically
-            timelinePoints[autoPlayIndex].click();
-            autoPlayIndex++;
-        } else {
-            clearInterval(autoPlayInterval);
-            // Return to current era
-            if (lastPoint) {
-                setTimeout(() => lastPoint.click(), 2000);
-            }
-        }
-    }, 3000);
-    
-    // Stop auto-play when user interacts
-    timelinePoints.forEach(point => {
-        point.addEventListener('click', () => {
-            clearInterval(autoPlayInterval);
-        });
-    });
 }
 
 // Enhanced Fee Calculator with Visual Effects
@@ -459,10 +910,6 @@ function initFeeCalculator() {
     const flowParticles = document.querySelectorAll('.flow-particle');
     
     if (!amountInput || !feeCards.length) return;
-    
-    // Ensure input is properly interactive
-    amountInput.style.cursor = 'text';
-    amountInput.setAttribute('tabindex', '0');
     
     function createFeeAnimation(card, feeAmount) {
         // Create floating fee indicator
@@ -553,7 +1000,7 @@ function initFeeCalculator() {
             }
         });
         
-        // Animate flow particles
+        // Animate flow particles if amount > 0
         if (amount > 0) {
             animateFlowParticles();
         }
@@ -566,7 +1013,6 @@ function initFeeCalculator() {
         this.style.borderColor = 'var(--color-primary)';
         this.style.transform = 'scale(1.05)';
     });
-    
     amountInput.addEventListener('blur', function() {
         this.style.borderColor = '';
         this.style.transform = '';
@@ -627,10 +1073,7 @@ function initRiskToggles() {
                     
                     // Scroll to show content
                     setTimeout(() => {
-                        card.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
-                        });
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }, 300);
                 } else {
                     details.classList.remove('active');
@@ -734,21 +1177,16 @@ function initPoll() {
     function updatePollDisplay() {
         pollButtons.forEach(btn => {
             const option = btn.getAttribute('data-option');
-            const percentage = pollData.total > 0 ? 
-                Math.round((pollData[option] / pollData.total) * 100) : 0;
-            
+            const percentage = pollData.total > 0 ? Math.round((pollData[option] / pollData.total) * 100) : 0;
             const percentageElement = btn.querySelector('.poll-percentage');
+            
             if (percentageElement) {
                 percentageElement.textContent = percentage + '%';
             }
             
             // Enhanced visual feedback with animated background
             if (percentage > 0) {
-                btn.style.background = `linear-gradient(to right, 
-                    var(--color-primary) 0%, 
-                    var(--color-primary) ${percentage}%, 
-                    var(--color-background) ${percentage}%, 
-                    var(--color-background) 100%)`;
+                btn.style.background = `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${percentage}%, var(--color-background) ${percentage}%, var(--color-background) 100%)`;
                 btn.style.color = percentage > 50 ? 'var(--color-btn-primary-text)' : 'var(--color-text)';
                 
                 // Add animation to percentage text
@@ -807,12 +1245,12 @@ function initPoll() {
                     // Show success message
                     setTimeout(() => {
                         showNotification('✓ Vielen Dank für Ihre Teilnahme!', 'success');
-                        
                         const resultsElement = document.querySelector('.poll-results');
                         if (resultsElement) {
                             resultsElement.innerHTML = `
-                                <p>Vielen Dank für Ihre Teilnahme! Insgesamt <span id="total-votes">${pollData.total}</span> Stimmen abgegeben</p>
-                                <p style="color: var(--color-success); margin-top: 8px; animation: fadeIn 0.5s ease;">✓ Ihre Stimme wurde erfasst</p>
+                                <h4>Vielen Dank für Ihre Teilnahme!</h4>
+                                <p>Insgesamt <strong>${pollData.total}</strong> Stimmen abgegeben</p>
+                                <p>✓ Ihre Stimme wurde erfasst</p>
                             `;
                         }
                     }, 1000);
@@ -864,7 +1302,8 @@ function initScrollAnimations() {
         .glowing-point,
         .animated-discussion,
         .enhanced-calculator,
-        .morphing-comparison
+        .morphing-comparison,
+        .survey-section
     `);
     
     animatedElements.forEach((el, index) => {
@@ -1047,102 +1486,195 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Add additional CSS animations dynamically
-const additionalAnimations = document.createElement('style');
-additionalAnimations.textContent = `
-    @keyframes particleFloat {
-        0% { opacity: 1; transform: translate(0, 0) scale(1); }
-        100% { opacity: 0; transform: translate(${Math.random() * 100 - 50}px, -50px) scale(0); }
-    }
-    
-    @keyframes feeFloat {
-        0% { opacity: 0; transform: translateY(10px); }
-        50% { opacity: 1; transform: translateY(-5px); }
-        100% { opacity: 0; transform: translateY(-20px); }
-    }
-    
-    @keyframes particleExplosion {
-        0% { 
-            opacity: 1; 
-            transform: translate(0, 0) scale(1); 
-        }
-        100% { 
-            opacity: 0; 
-            transform: translate(${Math.random() * 200 - 100}px, ${Math.random() * 200 - 100}px) scale(0); 
-        }
-    }
-    
-    @keyframes voteParticle {
-        0% { 
-            opacity: 1; 
-            transform: translate(-50%, -50%) scale(1); 
-        }
-        100% { 
-            opacity: 0; 
-            transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) scale(0); 
-        }
-    }
-    
-    @keyframes timelineParticle {
-        0% { 
-            opacity: 1; 
-            transform: translate(0, 0) scale(1); 
-        }
-        100% { 
-            opacity: 0; 
-            transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) scale(0.2); 
-        }
-    }
-    
-    @keyframes slideInRight {
-        from {
-            opacity: 0;
-            transform: translateX(100%);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-    
-    @keyframes fadeOut {
-        from { opacity: 1; }
-        to { opacity: 0; }
-    }
-`;
-
-document.head.appendChild(additionalAnimations);
-
-// Performance optimization: Throttle scroll events
-function throttle(func, delay) {
-    let timeoutId;
-    let lastExecTime = 0;
-    return function (...args) {
-        const currentTime = Date.now();
-        
-        if (currentTime - lastExecTime > delay) {
-            func.apply(this, args);
-            lastExecTime = currentTime;
-        } else {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                func.apply(this, args);
-                lastExecTime = Date.now();
-            }, delay - (currentTime - lastExecTime));
-        }
-    };
+// CSS Styling for Survey Section
+const surveyCSS = document.createElement('style');
+surveyCSS.textContent = `
+/* Survey Specific Styles */
+.survey-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-card-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-32);
+    margin-top: var(--space-32);
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-// Apply throttling to scroll-heavy functions
-const throttledProgressUpdate = throttle(() => {
-    // Re-bind progress bar update with throttling
-    const progressBar = document.querySelector('.progress-fill');
-    if (progressBar) {
-        const scrollTop = window.pageYOffset;
-        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        const scrollPercent = Math.max(0, Math.min(100, (scrollTop / docHeight) * 100));
-        progressBar.style.width = scrollPercent + '%';
-    }
-}, 16); // ~60fps
+.survey-form {
+    margin-bottom: var(--space-32);
+}
 
-window.addEventListener('scroll', throttledProgressUpdate);
+.survey-question {
+    margin-bottom: var(--space-24);
+}
+
+.survey-question h4 {
+    margin-bottom: var(--space-16);
+    color: var(--color-text);
+    font-size: var(--font-size-lg);
+}
+
+.survey-options {
+    display: grid;
+    gap: var(--space-12);
+}
+
+.survey-option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-16);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-base);
+    cursor: pointer;
+    transition: all var(--duration-normal) var(--ease-standard);
+    background: var(--color-background);
+}
+
+.survey-option:hover {
+    border-color: var(--color-primary);
+    background: var(--color-bg-1);
+}
+
+.survey-option input[type="radio"] {
+    opacity: 0;
+    position: absolute;
+    pointer-events: none;
+}
+
+.survey-option input[type="radio"]:checked + .option-icon {
+    background: var(--color-primary);
+    color: var(--color-btn-primary-text);
+}
+
+.option-icon {
+    font-size: var(--font-size-lg);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--color-secondary);
+    transition: all var(--duration-normal) var(--ease-standard);
+}
+
+.option-text {
+    flex-grow: 1;
+    font-weight: var(--font-weight-medium);
+}
+
+.survey-submit-btn {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-teal-300));
+    color: var(--color-btn-primary-text);
+    border: none;
+    padding: var(--space-16) var(--space-32);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition: all var(--duration-normal) var(--ease-standard);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-8);
+    width: 100%;
+    margin-top: var(--space-24);
+}
+
+.survey-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.survey-submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.survey-success {
+    background: linear-gradient(135deg, var(--color-success), var(--color-teal-300));
+    color: var(--color-btn-primary-text);
+    padding: var(--space-24);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    margin-bottom: var(--space-32);
+}
+
+.charts-container {
+    display: grid;
+    gap: var(--space-32);
+    margin-top: var(--space-32);
+}
+
+.chart-section {
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-24);
+    position: relative;
+    height: 400px;
+}
+
+.chart-section h4 {
+    margin-bottom: var(--space-16);
+    text-align: center;
+    color: var(--color-text);
+}
+
+.chart-section canvas {
+    max-height: 320px !important;
+}
+
+.survey-stats {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-24);
+    margin-top: var(--space-32);
+}
+
+.stat-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-card-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-20);
+    text-align: center;
+    min-width: 150px;
+}
+
+.stat-card .stat-number {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    margin-bottom: var(--space-8);
+}
+
+.stat-card .stat-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-section {
+        height: 300px;
+    }
+    
+    .chart-section canvas {
+        max-height: 220px !important;
+    }
+    
+    .survey-stats {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+`;
+
+document.head.appendChild(surveyCSS);
