@@ -47,7 +47,7 @@ try {
 
 // Deutsche Referenz-Statistiken (basierend auf repräsentativen Umfragen)
 const germanStats = {
-    payment_preference: { bargeld: 45, bargeldlos: 55 },
+    payment_preference: { bargeld: 51, bargeldlos: 49 },
     cash_obligation: { ja: 68, nein: 22, teilweise: 10 },
     digital_security: { sehr_sicher: 15, sicher: 45, unsicher: 30, sehr_unsicher: 10 },
     digital_euro_usage: { ja: 35, nein: 25, vielleicht: 40 },
@@ -61,20 +61,20 @@ const surveyCharts = {};
 function initFirebaseSurvey() {
     const surveyForm = document.getElementById('detailedSurveyForm');
     const successDiv = document.getElementById('surveySuccess');
-    
+
     if (!surveyForm) return;
-    
+
     // Event Listener für Formular-Absenden
     surveyForm.addEventListener('submit', async function(e) {
         e.preventDefault();
-        
+
         try {
             // Zeige Loading-Animation
             const submitBtn = surveyForm.querySelector('.survey-submit-btn');
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<span class="btn-icon">⏳</span>Wird gespeichert...';
             submitBtn.disabled = true;
-            
+
             // Sammle Formulardaten
             const formData = new FormData(surveyForm);
             const surveyData = {
@@ -86,7 +86,7 @@ function initFirebaseSurvey() {
                 timestamp: new Date().toISOString(),
                 user_agent: navigator.userAgent
             };
-            
+
             // Speichere in Firebase (falls verfügbar)
             if (firebaseInitialized && db) {
                 await db.collection('survey_responses').add(surveyData);
@@ -95,64 +95,64 @@ function initFirebaseSurvey() {
                 // Fallback: Lokale Speicherung für Demo
                 console.log("Demo-Modus: Umfrage lokal gespeichert", surveyData);
             }
-            
+
             // Zeige Erfolgs-Message
             successDiv.style.display = 'block';
             surveyForm.style.display = 'none';
-            
-            // Lade und zeige Ergebnisse
-            await loadAndDisplaySurveyResults();
-            
+
+            // Kein manuelles Laden hier mehr nötig, da listener automatisch aktualisiert
             // Scroll zu Diagrammen
-            document.querySelector('.charts-container').scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
+            document.querySelector('.charts-container').scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
             });
-            
+
         } catch (error) {
             console.error('Fehler beim Speichern der Umfrage:', error);
             alert('Fehler beim Speichern deiner Antworten. Bitte versuche es erneut.');
-            
+
             // Restore button
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
         }
     });
-    
-    // Lade initial die Diagramme
+
+    // Initiale Diagrammanzeige mit Echtzeit-Listener
     loadAndDisplaySurveyResults();
 }
 
-// Lade Umfrage-Ergebnisse und erstelle Diagramme
-async function loadAndDisplaySurveyResults() {
-    try {
-        let responses = [];
-        
-        if (firebaseInitialized && db) {
-            // Lade echte Daten aus Firebase
-            const snapshot = await db.collection('survey_responses').get();
-            responses = [];
-            snapshot.forEach(doc => {
-                responses.push(doc.data());
-            });
-        } else {
-            // Demo-Daten für Präsentation (falls Firebase nicht verfügbar)
-            responses = generateDemoResponses(12);
-        }
-        
-        // Update Statistiken
+
+// Lade Umfrage-Ergebnisse und erstelle Diagramme mit Echtzeit Listener
+function loadAndDisplaySurveyResults() {
+    if (!(firebaseInitialized && db)) {
+        // Demo-Daten für Präsentation (falls Firebase nicht verfügbar)
+        const responses = generateDemoResponses(12);
         updateSurveyStats(responses.length);
-        
-        // Erstelle alle Diagramme
         createPaymentPreferenceChart(responses);
         createDigitalSecurityChart(responses);
         createDigitalEuroChart(responses);
         createPaymentPriorityChart(responses);
         createCashObligationChart(responses);
-        
-    } catch (error) {
-        console.error('Fehler beim Laden der Umfrageergebnisse:', error);
+        return;
     }
+
+    // Realtime Listener ersetzt einmaliges get()
+    db.collection('survey_responses').onSnapshot(snapshot => {
+        const responses = [];
+        snapshot.forEach(doc => {
+            responses.push(doc.data());
+        });
+
+        updateSurveyStats(responses.length);
+        createPaymentPreferenceChart(responses);
+        createDigitalSecurityChart(responses);
+        createDigitalEuroChart(responses);
+        createPaymentPriorityChart(responses);
+        createCashObligationChart(responses);
+
+    }, error => {
+        console.error('Fehler beim Laden der Umfrageergebnisse:', error);
+    });
 }
 
 // Aggregiere Antworten für eine bestimmte Frage
@@ -184,6 +184,30 @@ function updateSurveyStats(totalResponses) {
         minute: '2-digit'
     });
 }
+
+function initLiveParticipantCount() {
+  if (!(firebaseInitialized && db)) {
+    // Demo-Modus oder kein Zugriff auf Firebase
+    return;
+  }
+  const totalResponsesEl = document.getElementById('totalResponses');
+  const lastUpdateEl = document.getElementById('lastUpdate');
+  if (!totalResponsesEl || !lastUpdateEl) return;
+
+  db.collection('survey_responses').onSnapshot(snapshot => {
+    const count = snapshot.size;
+    totalResponsesEl.textContent = count;
+    lastUpdateEl.textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }, error => {
+    console.error("Fehler beim Live-Listener der Teilnehmeranzahl:", error);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // weitere initiale Funktionen hier ...
+  initLiveParticipantCount();
+});
+
 
 // ===== DIAGRAMM-FUNKTIONEN =====
 
